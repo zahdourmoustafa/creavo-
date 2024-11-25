@@ -1,11 +1,13 @@
 'use client';
 
 import { ActiveTool, Editor } from '@/features/editor/type';
-
+import {RxTransparencyGrid} from "react-icons/rx"
 import { Button } from '@/components/ui/button';
 import { Hint } from '@/components/hint';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { BsBorderWidth } from 'react-icons/bs';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 interface ToolbarProps {
   editor: Editor | undefined;
   activeTool: ActiveTool;
@@ -59,6 +61,56 @@ export const Toolbar = ({
                 borderColor: strokeColor
               }}
             />
+          </Button>
+        </Hint>
+      </div>
+
+      <div className="flex items-center h-full justify-center">
+        <Hint label="Stroke width" side="bottom" sideOffset={5}>
+          <Button
+            onClick={() => onChangeActiveTool('stroke-width')}
+            size="icon"
+            variant="ghost"
+            className={cn(activeTool === 'stroke-width' && 'bg-gray-100')}
+          >
+           <BsBorderWidth className='size-4'/>
+          </Button>
+        </Hint>
+      </div>
+
+      <div className="flex items-center h-full justify-center">
+        <Hint label="Bring forward" side="bottom" sideOffset={5}>
+          <Button
+            onClick={() => editor?.bringForward()}
+            size="icon"
+            variant="ghost"
+          >
+           <ArrowUp className='size-4'/>
+          </Button>
+        </Hint>
+      </div>
+
+      <div className="flex items-center h-full justify-center">
+        <Hint label="Send backward" side="bottom" sideOffset={5}>
+          <Button
+            onClick={() => editor?.sendBackwards()}
+            size="icon"
+            variant="ghost"
+          >
+           <ArrowDown className='size-4'/>
+          </Button>
+        </Hint>
+      </div>
+
+      <div className="flex items-center h-full justify-center">
+        <Hint label="Opacity" side="bottom" sideOffset={5}>
+          <Button
+            onClick={() => onChangeActiveTool("opacity")}
+            size="icon"
+            variant="ghost"
+            className={cn(activeTool==="opacity" && "bg-gray-100")}
+          >
+           <RxTransparencyGrid className='size-4'/>
           </Button>
         </Hint>
       </div>

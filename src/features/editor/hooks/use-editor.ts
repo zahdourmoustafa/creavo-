@@ -1,13 +1,14 @@
 import { useCallback, useState, useMemo } from "react"
 import {fabric} from "fabric";
 import { useAutoResize } from "./use-auto-resize";
-import { BuildEditorProps, Editor, EditorHookProps, FILL_COLOR,STROKE_COLOR, STROKE_WIDTH } from "../type";
+import { BuildEditorProps, Editor, EditorHookProps, FILL_COLOR,STROKE_COLOR, STROKE_DASH_ARRAY, STROKE_WIDTH } from "../type";
 import { CIRCLE_OPTIONS,RECTANGLE_OPTIONS ,TRIANGLE_OPTIONS,DIAMOND_OPTIONS} from "../type";
 import { useCanvasEvents } from "./use-canvas-events";
 import { isTextType } from "../utils";
+import { SendToBack } from "lucide-react";
 
 
-const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor,strokeWidth,setStrokeWidth,selectedObjects}: BuildEditorProps): Editor	 => {
+const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor,strokeWidth,setStrokeWidth,selectedObjects, strokeDashArray,setstrokeDashArray}: BuildEditorProps): Editor	 => {
     const getWorkspace = () => {
         return canvas
         .getObjects()
@@ -31,12 +32,49 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
      }
     return {
 
+        getActiveOpacity: () => {
+            const selectedObject = selectedObjects[0];
+      
+            if (!selectedObject) {
+              return 1;
+            }
+      
+            const value = selectedObject.get("opacity") || 1;
+      
+            return value;
+          },
+
+        changeOpacity:(value:number) => {
+            canvas.getActiveObjects().forEach((object)=>{
+                object.set({opacity: value});
+            });
+            canvas.renderAll()
+        },
+
+        bringForward:() => {
+            canvas.getActiveObjects().forEach((object) =>{
+                canvas.bringForward(object);
+            })
+
+            canvas.renderAll();
+        },
+        sendBackwards:() => {
+            canvas.getActiveObjects().forEach((object) =>{
+                canvas.sendBackwards(object);
+            })
+
+            canvas.renderAll();
+        },
+
+
         changeFillColor:(value:string) => {
             setFillColor(value);
             canvas.getActiveObjects().forEach((object) => {
                 object.set({fill: value});
             });
             canvas.renderAll();
+            const workspace = getWorkspace();
+            workspace?.sendToBack()
              
         }, 
         changeStrokeColor: (value: string) => {
@@ -52,12 +90,23 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
             });
             canvas.freeDrawingBrush.color = value;
             canvas.renderAll();
+            const workspace = getWorkspace();
+            workspace?.sendToBack()
           },
 
         changeStrokeWidth:(value:number) => {
             setStrokeWidth(value);
             canvas.getActiveObjects().forEach((object) => {
                 object.set({strokeWidth: value});
+            });
+            canvas.renderAll();
+
+        },
+
+        changeStrokeDashArray:(value:number[]) => {
+            setstrokeDashArray(value);
+            canvas.getActiveObjects().forEach((object) => {
+                object.set({strokeDashArray: value});
             });
             canvas.renderAll();
 
@@ -69,7 +118,9 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
                 ...CIRCLE_OPTIONS,  
                 fill:fillColor,
                 stroke:strokeColor,
-                strokeWidth:strokeWidth
+                strokeWidth:strokeWidth,
+                strokeDashArray:strokeDashArray
+ 
             });
              
             addToCanvas(object);
@@ -81,7 +132,9 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
                 ry: 50,
                 fill:fillColor,
                 stroke:strokeColor,
-                strokeWidth:strokeWidth
+                strokeWidth:strokeWidth,
+                strokeDashArray:strokeDashArray
+
 
             });
             addToCanvas(object);
@@ -92,7 +145,9 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
                 ...RECTANGLE_OPTIONS,
                 fill:fillColor,
                 stroke:strokeColor,
-                strokeWidth:strokeWidth
+                strokeWidth:strokeWidth,
+                strokeDashArray:strokeDashArray
+
 
             });
             addToCanvas(object);
@@ -103,7 +158,9 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
                 ...TRIANGLE_OPTIONS,
                 fill:fillColor,
                 stroke:strokeColor,
-                strokeWidth:strokeWidth
+                strokeWidth:strokeWidth,
+                strokeDashArray:strokeDashArray
+
 
             });
             addToCanvas(object);
@@ -124,7 +181,9 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
                     ...TRIANGLE_OPTIONS,
                     fill:fillColor,
                     stroke:strokeColor,
-                    strokeWidth:strokeWidth
+                    strokeWidth:strokeWidth,
+                    strokeDashArray:strokeDashArray
+
                 }
 
             );
@@ -146,7 +205,8 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
                     ...DIAMOND_OPTIONS,
                     fill:fillColor,
                     stroke:strokeColor,
-                    strokeWidth:strokeWidth
+                    strokeWidth:strokeWidth,
+                    strokeDashArray:strokeDashArray
                 }
 
             );
@@ -170,15 +230,37 @@ const buildEditor = ({ canvas, fillColor,strokeColor,setStrokeColor,setFillColor
             const selectedObject = selectedObjects[0];
       
             if (!selectedObject) {
-              return fillColor;
+              return strokeColor;
             }
       
             const value = selectedObject.get("stroke") || strokeColor;
       
             return value;
           },
-          strokeColor,
-          strokeWidth,
+          getActiveStrokeWidth: () => {
+            const selectedObject = selectedObjects[0];
+      
+            if (!selectedObject) {
+              return strokeWidth;
+            }
+      
+            const value = selectedObject.get("strokeWidth") || strokeWidth;
+      
+            return value;
+          },
+
+          getActiveStrokeDashArray: () => {
+            const selectedObject = selectedObjects[0];
+      
+            if (!selectedObject) {
+              return strokeDashArray;
+            }
+      
+            const value = selectedObject.get("strokeDashArray") || strokeDashArray;
+      
+            return value;
+          },
+
           selectedObjects
 
 
@@ -199,6 +281,7 @@ export const useEditor = ({clearSelectionCallback}
     const[fillColor, setFillColor] = useState(FILL_COLOR);
     const[strokeColor, setStrokeColor] = useState(STROKE_COLOR);
     const [strokeWidth, setStrokeWidth] = useState(STROKE_WIDTH);
+    const [strokeDashArray, setstrokeDashArray] = useState<number[]>(STROKE_DASH_ARRAY);
 
 
     useAutoResize({canvas, container});
@@ -211,6 +294,8 @@ export const useEditor = ({clearSelectionCallback}
                 canvas,
                 fillColor,
                 strokeColor,
+                strokeDashArray,
+                setstrokeDashArray,
                 strokeWidth,
                 setFillColor,
                 setStrokeColor,
@@ -222,6 +307,8 @@ export const useEditor = ({clearSelectionCallback}
 
     },[canvas,                
         fillColor,
+        strokeDashArray,
+        setstrokeDashArray,
         strokeColor,
         strokeWidth,]);
 
